@@ -1,0 +1,43 @@
+-- Tabla de posiciones (muy básica)
+SELECT e.nombre,
+       SUM(p.goles_local) FILTER (WHERE p.local_id=e.equipo_id) +
+       SUM(p.goles_visitante) FILTER (WHERE p.visitante_id=e.equipo_id) AS GF,
+       SUM(p.goles_visitante) FILTER (WHERE p.local_id=e.equipo_id) +
+       SUM(p.goles_local) FILTER (WHERE p.visitante_id=e.equipo_id) AS GC
+FROM Equipos e
+LEFT JOIN Partidos p ON e.equipo_id IN (p.local_id,p.visitante_id)
+GROUP BY e.nombre;
+
+-- Goleadores
+SELECT j.nombre, COUNT(g.gol_id) AS goles
+FROM Jugadores j
+JOIN Goles g ON j.jugador_id=g.jugador_id
+GROUP BY j.nombre
+ORDER BY goles DESC;
+
+-- Partidos de un equipo
+SELECT p.fecha, el.nombre AS local, ev.nombre AS visitante,
+       p.goles_local, p.goles_visitante
+FROM Partidos p
+JOIN Equipos el ON el.equipo_id=p.local_id
+JOIN Equipos ev ON ev.equipo_id=p.visitante_id
+WHERE el.nombre='Atlético Barrio' OR ev.nombre='Atlético Barrio';
+
+--JUGADORES CON MAS TARJETAS 
+SELECT j.nombre AS jugador, e.nombre AS equipo,
+       SUM(CASE WHEN t.tipo='amarilla' THEN 1 ELSE 0 END) AS amarillas,
+       SUM(CASE WHEN t.tipo='roja' THEN 1 ELSE 0 END) AS rojas
+FROM Jugadores j
+JOIN Equipos e ON j.equipo_id=e.equipo_id
+JOIN Tarjetas t ON j.jugador_id=t.jugador_id
+GROUP BY j.nombre, e.nombre
+ORDER BY rojas DESC, amarillas DESC;
+
+PROXIMOS PARTIDOS
+SELECT p.fecha, el.nombre AS local, ev.nombre AS visitante,
+       p.goles_local, p.goles_visitante
+FROM Partidos p
+JOIN Equipos el ON el.equipo_id=p.local_id
+JOIN Equipos ev ON ev.equipo_id=p.visitante_id
+WHERE el.nombre='Atlético Barrio' OR ev.nombre='Atlético Barrio'
+ORDER BY p.fecha;

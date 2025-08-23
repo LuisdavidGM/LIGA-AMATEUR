@@ -1,0 +1,64 @@
+-- 3) Goleadores por torneo (cuenta goles por jugador)
+CREATE OR REPLACE VIEW vista_goleadores AS
+SELECT
+  p.torneo_id,
+  j.jugador_id,
+  j.nombre    AS jugador,
+  e.nombre    AS equipo,
+  COUNT(g.gol_id) AS goles
+FROM Goles g
+JOIN Partidos p  ON p.partido_id = g.partido_id
+JOIN Jugadores j ON j.jugador_id = g.jugador_id
+JOIN Equipos e   ON e.equipo_id = j.equipo_id
+GROUP BY p.torneo_id, j.jugador_id, j.nombre, e.nombre
+ORDER BY p.torneo_id, goles DESC, jugador;
+
+-- 4) Tarjetas por jugador y torneo (amarillas/rojas)
+CREATE OR REPLACE VIEW vista_tarjetas_jugadores AS
+SELECT
+  p.torneo_id,
+  j.jugador_id,
+  j.nombre  AS jugador,
+  e.nombre  AS equipo,
+  SUM(CASE WHEN t.tipo='amarilla' THEN 1 ELSE 0 END) AS amarillas,
+  SUM(CASE WHEN t.tipo='roja'     THEN 1 ELSE 0 END) AS rojas
+FROM Tarjetas t
+JOIN Partidos p  ON p.partido_id = t.partido_id
+JOIN Jugadores j ON j.jugador_id = t.jugador_id
+JOIN Equipos e   ON e.equipo_id = j.equipo_id
+GROUP BY p.torneo_id, j.jugador_id, j.nombre, e.nombre
+ORDER BY p.torneo_id, rojas DESC, amarillas DESC, jugador;
+
+-- 5) Fair play por equipo (tarjetas acumuladas por torneo)
+CREATE OR REPLACE VIEW vista_fair_play_equipos AS
+SELECT
+  p.torneo_id,
+  e.equipo_id,
+  e.nombre AS equipo,
+  SUM(CASE WHEN t.tipo='amarilla' THEN 1 ELSE 0 END) AS amarillas,
+  SUM(CASE WHEN t.tipo='roja'     THEN 1 ELSE 0 END) AS rojas,
+  SUM(CASE WHEN t.tipo='amarilla' THEN 1 ELSE 0 END)*1 +
+  SUM(CASE WHEN t.tipo='roja'     THEN 1 ELSE 0 END)*3 AS puntos_fair_play
+FROM Tarjetas t
+JOIN Partidos p ON p.partido_id = t.partido_id
+JOIN Jugadores j ON j.jugador_id = t.jugador_id
+JOIN Equipos e   ON e.equipo_id = j.equipo_id
+GROUP BY p.torneo_id, e.equipo_id, e.nombre
+ORDER BY p.torneo_id, puntos_fair_play DESC, rojas DESC, amarillas DESC;
+
+-- 6) Agenda próxima por equipo (partidos desde hoy)
+-- Nota: filtrás por equipo en un SELECT sobre esta vista (WHERE equipo='Atlético Barrio')
+CREATE OR REPLACE VIEW vista_agenda_proxima AS
+SELECT
+  p.partido_id,
+  p.torneo_id,
+  p.fecha,
+  el.nombre AS local,
+  ev.nombre AS visitante,
+  p.goles_local,
+  p.goles_visitante
+FROM Partidos p
+JOIN Equipos el ON el.equipo_id = p.local_id
+JOIN Equipos ev ON ev.equipo_id = p.visitante_id
+WHERE p.fecha >= CURRENT_DATE
+ORDER BY p.fecha, p.partido_id;
