@@ -1,0 +1,50 @@
+-- EQUIPOS
+CREATE TABLE Equipos (
+  equipo_id SERIAL PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  ciudad VARCHAR(100)
+);
+
+CREATE TABLE Jugadores (
+  jugador_id SERIAL PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  posicion VARCHAR(20), -- portero, defensa, medio, delantero
+  equipo_id INT REFERENCES Equipos(equipo_id)
+);
+
+CREATE TABLE Torneos (
+  torneo_id SERIAL PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  temporada VARCHAR(20)
+);
+
+CREATE TABLE Partidos (
+  partido_id SERIAL PRIMARY KEY,
+  torneo_id INT REFERENCES Torneos(torneo_id),
+  local_id INT REFERENCES Equipos(equipo_id),
+  visitante_id INT REFERENCES Equipos(equipo_id),
+  fecha DATE,
+  goles_local INT,
+  goles_visitante INT
+);
+
+CREATE TABLE Goles (
+  gol_id SERIAL PRIMARY KEY,
+  partido_id INT REFERENCES Partidos(partido_id),
+  jugador_id INT REFERENCES Jugadores(jugador_id),
+  minuto INT
+);
+
+CREATE TABLE Tarjetas (
+  tarjeta_id SERIAL PRIMARY KEY,
+  partido_id INT REFERENCES Partidos(partido_id),
+  jugador_id INT REFERENCES Jugadores(jugador_id),
+  tipo VARCHAR(10) -- amarilla o roja
+);
+
+CREATE TABLE Estadisticas (
+  jugador_id INT REFERENCES Jugadores(jugador_id),
+  goles INT,
+  amarillas INT,
+  rojas INT
+);
